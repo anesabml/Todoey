@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewControllerTableViewController: UITableViewController {
+class CategoryTableViewController: SwipeTableViewController {
    
     let realm = try! Realm()
     
@@ -19,6 +20,7 @@ class CategoryViewControllerTableViewController: UITableViewController {
         super.viewDidLoad()
 
         loadCategories()
+        
     }
 
     // MARK: - Table view data source
@@ -28,12 +30,13 @@ class CategoryViewControllerTableViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
 
         let category = categories?[indexPath.row]
         
         cell.textLabel?.text = category?.name ?? "No categories added yet"
-
+        
+        cell.backgroundColor = UIColor(hexString: category?.color ?? "1D9BF6")
         return cell
     }
     
@@ -52,7 +55,7 @@ class CategoryViewControllerTableViewController: UITableViewController {
             
             let category = Category()
             category.name = textField.text!
-            
+            category.color = UIColor.randomFlat.hexValue()
             self.save(category: category)
         }
         
@@ -94,5 +97,17 @@ class CategoryViewControllerTableViewController: UITableViewController {
     func loadCategories() {
         categories = realm.objects(Category.self)
         tableView.reloadData()
+    }
+    
+    override func updateData(at indexPath: IndexPath) {
+        if let category = self.categories?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(category)
+                }
+            } catch {
+                print("Error deleting category \(error)")
+            }
+        }
     }
 }
